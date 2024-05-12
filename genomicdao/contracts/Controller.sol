@@ -43,18 +43,13 @@ contract Controller {
 
     function uploadData(string memory docId) public returns (uint256) {
         require(
-            bytes(getDoc(docId).id).length == 0,
+            !docSubmits[docId],
             "Doc already been submitted"
         );
 
         uint256 sessionId = _sessionIdCounter.current();
 
-        sessions[sessionId] = UploadSession(
-            sessionId,
-            msg.sender,
-            "",
-            false
-        );
+        sessions[sessionId] = UploadSession(sessionId, msg.sender, "", false);
 
         emit UploadData(docId, sessionId);
 
@@ -74,33 +69,26 @@ contract Controller {
 
         // TODO: Verify proof, we can skip this step
 
-        require(
-            bytes(getDoc(docId).id).length == 0,
-            "Doc already been submitted"
-        );
+        require(!docSubmits[docId], "Doc already been submitted");
 
         require(
             getSession(sessionId).user == msg.sender,
             "Invalid session owner"
         );
 
-        require(
-            getSession(sessionId).confirmed == false,
-            "Session is ended"
-        );
+        require(getSession(sessionId).confirmed == false, "Session is ended");
 
         docs[docId] = DataDoc(docId, contentHash);
 
-        geneNFT.safeMint(msg.sender);
+        uint geneNFTTokenId = geneNFT.safeMint(msg.sender);
+        nftDocs[geneNFTTokenId] = docId;
 
         pcspToken.reward(msg.sender, riskScore);
 
-        sessions[sessionId] = UploadSession(
-            sessionId,
-            msg.sender,
-            "success",
-            true
-        );
+        sessions[sessionId].proof = proof;
+        sessions[sessionId].confirmed = true;
+
+        docSubmits[docId] = true;
     }
 
     function getSession(
