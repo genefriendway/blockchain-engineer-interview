@@ -4,6 +4,7 @@ const {
 } = require("@nomicfoundation/hardhat-toolbox/network-helpers");
 
 const { expect } = require("chai");
+const { ethers } = require("hardhat");
 
 describe("Controller", function () {
   async function deployControllerFixture() {

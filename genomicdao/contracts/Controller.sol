@@ -42,7 +42,25 @@ contract Controller {
     }
 
     function uploadData(string memory docId) public returns (uint256) {
-        // TODO: Implement this method: to start an uploading gene data session. The doc id is used to identify a unique gene profile. Also should check if the doc id has been submited to the system before. This method return the session id
+        require(
+            bytes(getDoc(docId).id).length == 0,
+            "Doc already been submitted"
+        );
+
+        uint256 sessionId = _sessionIdCounter.current();
+
+        sessions[sessionId] = UploadSession(
+            sessionId,
+            msg.sender,
+            "",
+            false
+        );
+
+        emit UploadData(docId, sessionId);
+
+        _sessionIdCounter.increment();
+
+        return sessionId;
     }
 
     function confirm(
@@ -56,20 +74,42 @@ contract Controller {
 
         // TODO: Verify proof, we can skip this step
 
-        // TODO: Update doc content
+        require(
+            bytes(getDoc(docId).id).length == 0,
+            "Doc already been submitted"
+        );
 
-        // TODO: Mint NFT 
+        require(
+            getSession(sessionId).user == msg.sender,
+            "Invalid session owner"
+        );
 
-        // TODO: Reward PCSP token based on risk stroke
+        require(
+            getSession(sessionId).confirmed == false,
+            "Session is ended"
+        );
 
-        // TODO: Close session
+        docs[docId] = DataDoc(docId, contentHash);
+
+        geneNFT.safeMint(msg.sender);
+
+        pcspToken.reward(msg.sender, riskScore);
+
+        sessions[sessionId] = UploadSession(
+            sessionId,
+            msg.sender,
+            "success",
+            true
+        );
     }
 
-    function getSession(uint256 sessionId) public view returns(UploadSession memory) {
+    function getSession(
+        uint256 sessionId
+    ) public view returns (UploadSession memory) {
         return sessions[sessionId];
     }
 
-    function getDoc(string memory docId) public view returns(DataDoc memory) {
+    function getDoc(string memory docId) public view returns (DataDoc memory) {
         return docs[docId];
     }
 }

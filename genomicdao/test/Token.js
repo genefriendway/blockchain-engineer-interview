@@ -86,10 +86,12 @@ describe("Token", function () {
       const { pcspToken, addr1 } = await loadFixture(deployTokenFixture);
 
       const awardAmount = BigInt("225") * BigInt("10") ** BigInt("18")
+      console.log('award amount=====', awardAmount);
 
       await pcspToken.reward(addr1, 3)
 
       const ownerBalance = await pcspToken.balanceOf(addr1.address)
+      console.log('owner balance=====', ownerBalance);
 
       expect(ownerBalance).to.equal(awardAmount)
     })
